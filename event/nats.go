@@ -53,3 +53,20 @@ func (*NatsEventStore) writeMessage(m Message) ([]byte, error) {
 	}
 	return b.Bytes(), nil
 }
+
+// OnMeowCreated --
+func (n *NatsEventStore) OnMeowCreated(f func(MeowCreatedMessage)) (err error) {
+	m := MeowCreatedMessage{}
+	n.meowCreatedSubscription, err = n.nc.Subscribe(m.Key(), func(msg *nats.Msg) {
+		n.readMessage(msg.Data, &m)
+		f(m)
+	})
+
+	return
+}
+
+func (*NatsEventStore) readMessage(data []byte, m interface{}) error {
+	b := bytes.Buffer{}
+	b.Write(data)
+	return gob.NewDecoder(&b).Decode(m)
+}
